@@ -106,7 +106,8 @@ jobs:
         shell: powershell
         run: |
           New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
-          dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
+          dotnet tool update dotnet-sonarscanner `
+            --tool-path ${{ runner.temp }}\scanner
 
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
@@ -121,13 +122,13 @@ jobs:
           ${{ runner.temp }}\scanner\dotnet-sonarscanner begin `
             /k:"mohamed-ben-salem_online-mall-platform" `
             /o:"mohamed-ben-salem" `
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
+            /d:sonar.token="$env:SONAR_TOKEN" `
             /d:sonar.host.url="https://sonarcloud.io" `
             /d:sonar.sources="backend" `
             /d:sonar.exclusions="**/bin/**,**/obj/**"
           dotnet build backend/OnlineMall.sln
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end `
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+            /d:sonar.token="$env:SONAR_TOKEN"
 
   # ─────────────────────────────────────
   # JOB 4 — Build Angular Frontend
