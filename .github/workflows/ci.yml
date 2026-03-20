@@ -1,0 +1,90 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+      - release/*
+
+jobs:
+
+  # ─────────────────────────────────────
+  # JOB 1 — Build & Test .NET Backend
+  # ─────────────────────────────────────
+  build-backend:
+    name: Build and Test Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore backend/OnlineMall.sln
+
+      - name: Build solution
+        run: dotnet build backend/OnlineMall.sln
+          --no-restore
+          --configuration Release
+
+      - name: Run tests
+        run: dotnet test backend/OnlineMall.sln
+          --no-restore
+          --no-build
+          --configuration Release
+          --verbosity normal
+        continue-on-error: true
+
+  # ─────────────────────────────────────
+  # JOB 2 — Build Angular Frontend
+  # ─────────────────────────────────────
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build Angular
+        run: npm run build -- --configuration production
+        working-directory: frontend
+
+  # ─────────────────────────────────────
+  # JOB 3 — Code Quality
+  # ─────────────────────────────────────
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Check .NET format
+        run: dotnet format backend/OnlineMall.sln
+          --verify-no-changes
+          --severity warn
+        continue-on-error: true
