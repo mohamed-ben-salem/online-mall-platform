@@ -1,0 +1,146 @@
+version: '3.8'
+
+services:
+
+  # ─────────────────────────────────────
+  # PostgreSQL — Main Database
+  # ─────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: mall-postgres
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mall-network
+
+  # ─────────────────────────────────────
+  # Redis — Cache & Sessions
+  # ─────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: mall-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - mall-network
+
+  # ─────────────────────────────────────
+  # Zookeeper — Required by Kafka
+  # ─────────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: mall-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - mall-network
+
+  # ─────────────────────────────────────
+  # Kafka — Message Broker
+  # ─────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: mall-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+    ports:
+      - "9092:9092"
+    networks:
+      - mall-network
+
+  # ─────────────────────────────────────
+  # Elasticsearch — Product Search
+  # ─────────────────────────────────────
+  elasticsearch:
+    image: elasticsearch:8.12.0
+    container_name: mall-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - mall-network
+
+  # ─────────────────────────────────────
+  # MinIO — Free S3 File Storage
+  # ─────────────────────────────────────
+  minio:
+    image: minio/minio
+    container_name: mall-minio
+    command: server /data --console-address ":9001"
+    env_file: .env
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - mall-network
+
+  # ─────────────────────────────────────
+  # MailHog — Email Testing
+  # ─────────────────────────────────────
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mall-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - mall-network
+
+  # ─────────────────────────────────────
+  # Seq — Log Viewer
+  # ─────────────────────────────────────
+  seq:
+    image: datalust/seq:latest
+    container_name: mall-seq
+    environment:
+      ACCEPT_EULA: Y
+      SEQ_FIRSTRUN_ADMINPASSWORD: ${SEQ_ADMIN_PASSWORD}
+    ports:
+      - "5341:5341"
+      - "8081:80"
+    volumes:
+      - seq_data:/data
+    networks:
+      - mall-network
+
+# ─────────────────────────────────────
+# Volumes
+# ─────────────────────────────────────
+volumes:
+  postgres_data:
+  elasticsearch_data:
+  minio_data:
+  seq_data:
+
+# ─────────────────────────────────────
+# Networks
+# ─────────────────────────────────────
+networks:
+  mall-network:
+    driver: bridge
