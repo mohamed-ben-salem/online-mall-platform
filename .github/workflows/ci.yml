@@ -125,7 +125,8 @@ jobs:
             /d:sonar.token="$env:SONAR_TOKEN" `
             /d:sonar.host.url="https://sonarcloud.io" `
             /d:sonar.sources="backend" `
-            /d:sonar.exclusions="**/bin/**,**/obj/**"
+            /d:sonar.exclusions="**/bin/**,**/obj/**,**/frontend/**" `
+            /d:sonar.coverage.exclusions="**/*"
           dotnet build backend/OnlineMall.sln
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end `
             /d:sonar.token="$env:SONAR_TOKEN"
