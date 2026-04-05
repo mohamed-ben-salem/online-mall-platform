@@ -10,6 +10,11 @@
     <PackageReference Include="MediatR" Version="14.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Auth\Commands\" />
+    <Folder Include="Common\" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
