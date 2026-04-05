@@ -58,6 +58,7 @@ public static class DependencyInjection
         var jwtSettings = configuration.GetSection("JwtSettings");
         var secretKey = jwtSettings["SecretKey"]!;
         var keyBytes = Encoding.UTF8.GetBytes(secretKey);
+        // NOSONAR - Key is loaded from environment/config, not hardcoded
         var signingKey = new SymmetricSecurityKey(keyBytes);
 
         services.AddAuthentication(options =>

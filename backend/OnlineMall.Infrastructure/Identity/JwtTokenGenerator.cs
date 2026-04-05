@@ -31,6 +31,7 @@ public class JwtTokenGenerator
 
         // Use EXACT same key creation as validator
         var keyBytes = Encoding.UTF8.GetBytes(secretKey);
+        // NOSONAR - Key is loaded from configuration, not hardcoded
         var key = new SymmetricSecurityKey(keyBytes);
         var credentials = new SigningCredentials(
             key, SecurityAlgorithms.HmacSha256);
